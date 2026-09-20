@@ -1,6 +1,7 @@
 import 'package:expressions/expressions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:math' as math;
 
 void main() {
   runApp(const MyApp());
@@ -176,12 +177,33 @@ class _CalculatorPageState extends State<CalculatorPage> {
 
   void _evaluate() {
     if (_expression.isEmpty) return;
+
     try {
       final parsed = Expression.parse(_expression);
-      final value = const ExpressionEvaluator().eval(parsed, {});
+
+      final context = {
+        'sqrt': (num x) => math.sqrt(x),
+        'pow': (num x, num y) => math.pow(x, y),
+
+        'sin': (num x) => math.sin(x),
+        'cos': (num x) => math.cos(x),
+        'tan': (num x) => math.tan(x),
+
+        'asin': (num x) => math.asin(x),
+        'acos': (num x) => math.acos(x),
+        'atan': (num x) => math.atan(x),
+
+        'log': (num x) => math.log(x),
+        'pi': math.pi,
+        'e': math.e,
+      };
+
+      final value = const ExpressionEvaluator().eval(parsed, context);
+
       if (value is! num || value.isNaN || value.isInfinite) {
         throw const FormatException('The result is not a finite number.');
       }
+
       setState(() {
         _result = _formatNumber(value);
         _cursorPosition = _expression.length;
@@ -374,26 +396,45 @@ class _CalculatorPageState extends State<CalculatorPage> {
   Widget _buildKeypad() {
     final isPhone = MediaQuery.sizeOf(context).shortestSide < 600;
     final buttons = [
-      ('C', _clear, true),
-      ('⌫', _backspace, false),
+      ('2nd', () {}, false),
+      ('π', () => _press('pi'), false),
+      ('e', () => _press('e'), false),
+      ('%', () => _press('%'), false),
+
+      ('√', () => _press('sqrt('), false),
+      ('x²', () => _press('^2'), false),
+      ('xʸ', () => _press('^'), false),
+      ('1/x', () => _press('1/'), false),
+
+      ('sin', () => _press('sin('), false),
+      ('cos', () => _press('cos('), false),
+      ('tan', () => _press('tan('), false),
+      ('ln', () => _press('ln('), false),
+
+      ('log', () => _press('log('), false),
       ('(', () => _press('('), false),
       (')', () => _press(')'), false),
+      ('÷', () => _press('/'), false),
+
       ('7', () => _press('7'), false),
       ('8', () => _press('8'), false),
       ('9', () => _press('9'), false),
-      ('÷', () => _press('/'), false),
+      ('×', () => _press('*'), false),
+
       ('4', () => _press('4'), false),
       ('5', () => _press('5'), false),
       ('6', () => _press('6'), false),
-      ('×', () => _press('*'), false),
+      ('−', () => _press('-'), false),
+
       ('1', () => _press('1'), false),
       ('2', () => _press('2'), false),
       ('3', () => _press('3'), false),
-      ('−', () => _press('-'), false),
-      ('0', () => _press('0'), false),
+      ('+', () => _press('+'), false),
+
+      ('C', _clear, true),
       ('.', () => _press('.'), false),
       ('=', _evaluate, false),
-      ('+', () => _press('+'), false),
+      ('⌫', _backspace, false),
     ];
 
     return GridView.builder(
